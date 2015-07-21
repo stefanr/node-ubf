@@ -140,13 +140,15 @@ export function setPoolValue(id: number, value: any): any {
  * Object Pool Extension : getPoolKey
  */
 export function getPoolKey(id: number): string {
-  return this.pool && this.pool.keys.get(id);
+  // return this.pool && this.pool.keys.get(id);
+  return this.pool && this.pool.values.get(id);
 }
 
 /**
  * Object Pool Extension : setPoolKey
  */
 export function setPoolKey(id: number, key: string): string {
-  this.pool && this.pool.keys.set(id, key);
+  // this.pool && this.pool.keys.set(id, key);
+  this.pool && this.pool.values.set(id, key);
   return key;
 }
