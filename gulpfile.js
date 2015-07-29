@@ -2,36 +2,37 @@
  * Universal Binary Format
  * Gulpfile
  */
+process.env.BABEL_ENV = "gulp";
+require("babel/register");
+
 var gulp = require("gulp");
-var assign = Object.assign || require("object.assign");
 
 var babelOptions = {
   stage: 2,
   optional: [
     "es7.classProperties",
-    "es7.decorators",
     "es7.functionBind",
   ],
 };
 
 gulp.task("default", ["transpile"]);
 
-gulp.task("transpile", ["build-common", "build-amd", "build-system"]);
+gulp.task("transpile", ["build-cjs", "build-amd", "build-es6"]);
 
-gulp.task("build-common", function () {
+gulp.task("build-cjs", function () {
   var babel = require("gulp-babel");
-  var options = assign({}, babelOptions, {
+  var options = Object.assign({}, babelOptions, {
     modules: "common",
   });
   return (gulp.src(["src/**/*.js"])
     .pipe(babel(options))
-    .pipe(gulp.dest("dist/common"))
+    .pipe(gulp.dest("dist/cjs"))
   );
 });
 
 gulp.task("build-amd", function () {
   var babel = require("gulp-babel");
-  var options = assign({}, babelOptions, {
+  var options = Object.assign({}, babelOptions, {
     modules: "amd",
   });
   return (gulp.src(["src/**/*.js"])
@@ -40,14 +41,16 @@ gulp.task("build-amd", function () {
   );
 });
 
-gulp.task("build-system", function () {
+gulp.task("build-es6", function () {
   var babel = require("gulp-babel");
-  var options = assign({}, babelOptions, {
-    modules: "system",
+  var options = Object.assign({}, babelOptions, {
+    blacklist: [
+      "es6",
+    ],
   });
   return (gulp.src(["src/**/*.js"])
     .pipe(babel(options))
-    .pipe(gulp.dest("dist/system"))
+    .pipe(gulp.dest("dist/es6"))
   );
 });
 
