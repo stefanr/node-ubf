@@ -2,15 +2,11 @@
 # .gitignore
 #
 
-# Node.js ------------------------------
+# OS X / Windows -----------------------
+.DS_Store
+Desktop.ini
+Thumbs.db
+
+# npm ----------------------------------
 node_modules
 npm-debug.log
-
-# OS X / Windows -----------------------
-.AppleDouble
-.DS_Store
-.LSOverride
-._*
-Desktop.ini
-Icon
-Thumbs.db

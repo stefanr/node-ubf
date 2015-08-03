@@ -1,6 +1,6 @@
 {
   "name": "ubf",
-  "version": "0.0.1-alpha.1",
+  "version": "0.0.1",
   "description": "Universal Binary Format",
   "author": {
     "name": "Stefan Rumzucker",
@@ -16,7 +16,7 @@
   },
   "dependencies": {
     "node-int64": "^0.4.0",
-    "yaee": "^0.1.0"
+    "yaee": "^0.1.2"
   },
   "devDependencies": {
     "babel": "^5.8.0",
