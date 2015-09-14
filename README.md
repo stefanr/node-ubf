@@ -1,7 +1,7 @@
 # [![ubf][ubf-img]][ubf-url]
 **Universal Binary Format**
 
-[![npm][npm-img]][npm-url]
+[![npm][npm-img]][npm-url] [![build status][travis-img]][travis-url]
 
 ## Documentation
 _TODO_
@@ -60,3 +60,5 @@ Hello World!
 [ubf-url]: https://npmjs.com/package/ubf
 [npm-img]: https://img.shields.io/npm/v/ubf.svg
 [npm-url]: https://npmjs.org/package/ubf
+[travis-img]: https://travis-ci.org/stefanr/node-ubf.svg
+[travis-url]: https://travis-ci.org/stefanr/node-ubf

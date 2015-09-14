@@ -1,5 +1,8 @@
 {
   "private": true,
+  "scripts": {
+    "test": "mocha . --opts mocha.opts"
+  },
   "dependencies": {
     "mocha": "^2.3.0"
   },

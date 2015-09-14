@@ -1,5 +1,8 @@
 {
   "private": true,
+  "scripts": {
+    "build": "natron build"
+  },
   "dependencies": {
     "gulp-babel": "^5.2.0",
     "natron": "^0.1.0",

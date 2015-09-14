@@ -9,9 +9,10 @@
   },
   "main": "dist/cjs/index",
   "scripts": {
-    "build": "natron build",
+    "build": "npm --prefix build run build",
     "build-install": "npm --prefix build install",
-    "test": "mocha"
+    "test": "npm --prefix test test",
+    "test-install": "npm --prefix test install"
   },
   "dependencies": {
     "node-int64": "^0.4.0",
