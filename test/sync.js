@@ -3,7 +3,7 @@
  * Test : sync
  */
 import assert from "assert";
-import {parseSync, ubfsizeSync, binarifySync} from "../src/index";
+import {parseSync, ubfsizeSync, binarifySync} from "../src";
 
 function hexBuf(buf: string): Buffer {
   return new Buffer(buf.replace(/[^0-9a-f]/gi, ""), "hex");

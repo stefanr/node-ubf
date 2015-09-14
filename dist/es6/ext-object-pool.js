@@ -5,17 +5,11 @@
 "use strict";
 
 export { extendContext };
-
 export { parseValue };
-
 export { parseKey };
-
 export { getPoolValue };
-
 export { setPoolValue };
-
 export { getPoolKey };
-
 export { setPoolKey };
 import * as MARKER from "./markers";
 import { LEN_OF_MARKER, LEN_OF_SIZE1, LEN_OF_SIZE2, LEN_OF_SIZE4 } from "./base-parser";
@@ -23,6 +17,7 @@ import { LEN_OF_MARKER, LEN_OF_SIZE1, LEN_OF_SIZE2, LEN_OF_SIZE4 } from "./base-
 /**
  * Object Pool Extension : extendContext
  */
+
 function extendContext() {
   Object.defineProperty(this, "pool", {
     value: {
@@ -36,6 +31,7 @@ function extendContext() {
 /**
  * Object Pool Extension : parseValue
  */
+
 function parseValue() {
   switch (this.readMarker()) {
     // Get Pool Value --------------------------
@@ -97,6 +93,7 @@ function parseValue() {
 /**
  * Object Pool Extension : parseKey
  */
+
 function parseKey() {
   switch (this.readMarker()) {
     // Get Pool Key ----------------------------
@@ -158,6 +155,7 @@ function parseKey() {
 /**
  * Object Pool Extension : getPoolValue
  */
+
 function getPoolValue(id) {
   return this.pool && this.pool.values.get(id);
 }
@@ -165,6 +163,7 @@ function getPoolValue(id) {
 /**
  * Object Pool Extension : setPoolValue
  */
+
 function setPoolValue(id, value) {
   this.pool && this.pool.values.set(id, value);
   return value;
@@ -173,6 +172,7 @@ function setPoolValue(id, value) {
 /**
  * Object Pool Extension : getPoolKey
  */
+
 function getPoolKey(id) {
   // return this.pool && this.pool.keys.get(id);
   return this.pool && this.pool.values.get(id);
@@ -181,6 +181,7 @@ function getPoolKey(id) {
 /**
  * Object Pool Extension : setPoolKey
  */
+
 function setPoolKey(id, key) {
   // this.pool && this.pool.keys.set(id, key);
   this.pool && this.pool.values.set(id, key);

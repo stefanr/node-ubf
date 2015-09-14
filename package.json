@@ -2,25 +2,23 @@
   "name": "ubf",
   "version": "0.0.1",
   "description": "Universal Binary Format",
-  "author": {
-    "name": "Stefan Rumzucker",
-    "email": "rumzucker@gmail.com"
-  },
+  "author": "Stefan Rumzucker",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/stefanr/node-ubf.git"
   },
-  "license": "MIT",
+  "main": "dist/cjs/index",
   "scripts": {
+    "build": "natron build",
+    "build-install": "npm --prefix build install",
     "test": "mocha"
   },
   "dependencies": {
     "node-int64": "^0.4.0",
-    "yaee": "^0.1.2"
+    "yaee": "^0.1.0"
   },
   "devDependencies": {
-    "babel": "^5.8.0",
-    "gulp": "^3.9.0",
-    "gulp-babel": "^5.1.0"
-  }
+    "babel-core": "^5.8.0"
+  },
+  "license": "MIT"
 }

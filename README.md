@@ -1,15 +1,12 @@
-# Universal Binary Format
+# [![ubf][ubf-img]][ubf-url]
+**Universal Binary Format**
 
-[![UBF](https://raw.githubusercontent.com/stefanr/node-ubf/gh-pages/images/ubf.png)](https://www.npmjs.com/package/ubf)
+[![npm][npm-img]][npm-url]
 
-## Installation
-
-```sh
-npm install ubf --save
-```
+## Documentation
+_TODO_
 
 ## Examples
-
 ### Parser
 
 ```js
@@ -58,3 +55,8 @@ true
 { a: 1, b: 2, c: 3 }
 Hello World!
 ```
+
+[ubf-img]: https://raw.githubusercontent.com/stefanr/node-ubf/gh-pages/images/ubf.png
+[ubf-url]: https://npmjs.com/package/ubf
+[npm-img]: https://img.shields.io/npm/v/ubf.svg
+[npm-url]: https://npmjs.org/package/ubf

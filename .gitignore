@@ -2,10 +2,8 @@
 # .gitignore
 #
 
-# OS X / Windows -----------------------
+# --------------------------------------
 .DS_Store
-Desktop.ini
-Thumbs.db
 
 # npm ----------------------------------
 node_modules

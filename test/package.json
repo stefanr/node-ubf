@@ -1,0 +1,9 @@
+{
+  "private": true,
+  "dependencies": {
+    "mocha": "^2.3.0"
+  },
+  "optionalDevDependencies": {
+    "babel-core": "^5.8.0"
+  }
+}

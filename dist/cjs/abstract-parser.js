@@ -16,7 +16,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "d
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) subClass.__proto__ = superClass; }
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
 
 var _yaee = require("yaee");
 
@@ -61,11 +61,11 @@ var AbstractParser = (function (_EventEmitter) {
       }
       return true;
     }
-  }, {
-    key: "readInt8",
 
     // Read operations -------------------------------------------------
 
+  }, {
+    key: "readInt8",
     value: function readInt8(offset) {
       return +this.buffer.readInt8(offset | 0, true);
     }
@@ -119,11 +119,11 @@ var AbstractParser = (function (_EventEmitter) {
     value: function readBinary(offset, length) {
       return this.buffer.slice(offset | 0, offset + length | 0);
     }
-  }, {
-    key: "consume",
 
     // Consume operations ----------------------------------------------
 
+  }, {
+    key: "consume",
     value: function consume(length, value) {
       this.offset += length | 0;
       return value;

@@ -130,12 +130,10 @@ class Parser extends AbstractParser {
   }
 }
 
-export { Parser };
-
 /**
  * ParseError
  */
-
+export { Parser };
 class ParseError extends Error {
 
   constructor(message, detail) {

@@ -5,15 +5,10 @@
 "use strict";
 
 export { parseControlDirective };
-
 export { parseValue };
-
 export { parseKey };
-
 export { parseLength };
-
 export { parseValueContainerDict };
-
 export { parseValueContainerList };
 import * as MARKER from "./markers";
 
@@ -32,6 +27,7 @@ export { LEN_OF_SIZE4 };
 /**
  * Base Profile : parseControlDirective
  */
+
 function parseControlDirective() {
   switch (this.readMarker()) {
     case MARKER.CTRL_HEADER:
@@ -45,6 +41,7 @@ function parseControlDirective() {
 /**
  * Base Profile : parseValue
  */
+
 function parseValue() {
   switch (this.readMarker()) {
     // Container : Dict ------------------------
@@ -199,6 +196,7 @@ function parseValue() {
 /**
  * Base Profile : parseKey
  */
+
 function parseKey() {
   switch (this.readMarker()) {
     // Key -------------------------------------
@@ -224,6 +222,7 @@ function parseKey() {
 /**
  * Base Profile : parseLength
  */
+
 function parseLength(size, relOffset = 0) {
   switch (size) {
     case LEN_OF_SIZE1:
@@ -268,6 +267,7 @@ function parseLength(size, relOffset = 0) {
 /**
  * Base Profile : parseValueContainerDict
  */
+
 function parseValueContainerDict(length) {
   let eoc = this.offset + length;
   let dict = Object.create(null);
@@ -289,6 +289,7 @@ function parseValueContainerDict(length) {
 /**
  * Base Profile : parseValueContainerList
  */
+
 function parseValueContainerList(length) {
   let eoc = this.offset + length;
   let list = [];

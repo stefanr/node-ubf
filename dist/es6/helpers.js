@@ -5,15 +5,10 @@
 "use strict";
 
 export { parse };
-
 export { parseSync };
-
 export { binarify };
-
 export { binarifySync };
-
 export { ubfsize };
-
 export { ubfsizeSync };
 import { Context } from "./context";
 import { Parser } from "./parser";
@@ -22,6 +17,7 @@ import { Binarifier } from "./binarifier";
 /**
  * parse
  */
+
 function parse(buffer) {
   return new Promise((resolve, reject) => {
     let p = new Parser(new Context());
@@ -38,6 +34,7 @@ function parse(buffer) {
 /**
  * parseSync
  */
+
 function parseSync(buffer) {
   let p = new Parser(new Context());
   let value;
@@ -58,6 +55,7 @@ function parseSync(buffer) {
 /**
  * binarify
  */
+
 function binarify(obj) {
   return new Promise((resolve, reject) => {
     try {
@@ -72,6 +70,7 @@ function binarify(obj) {
 /**
  * binarifySync
  */
+
 function binarifySync(obj) {
   try {
     let b = new Binarifier(new Context());
@@ -87,6 +86,7 @@ function binarifySync(obj) {
 /**
  * ubfsize
  */
+
 function ubfsize(obj) {
   return new Promise((resolve, reject) => {
     try {
@@ -102,6 +102,7 @@ function ubfsize(obj) {
 /**
  * ubfsizeSync
  */
+
 function ubfsizeSync(obj) {
   try {
     let b = new Binarifier(new Context());
