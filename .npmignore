@@ -4,9 +4,13 @@
 
 # --------------------------------------
 /build
-/docs
 /examples
+/src
 /test
+/.babelrc
 /.editorconfig
+/.eslintignore
 /.natronrc
+/.npmignore
+/.travis.yml
 /*.tgz

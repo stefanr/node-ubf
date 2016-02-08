@@ -2,12 +2,27 @@
 # .travis.yml
 #
 
-language: node_js
+language: "node_js"
 
 node_js:
-  - 0.12
-  - 4.0
+  - "stable"
+  # Long-term Support
+  - "4.2" # Argon
 
 install:
-  - npm install
-  - npm run test-install
+  # Install Global Modules
+  - "npm install eslint babel-eslint"
+  - "npm install mocha"
+
+  # Install Local Modules
+  - "npm install"
+
+  # Install Test Modules
+  - "npm --prefix test install"
+
+script:
+  # ESLint
+  - "node_modules/.bin/eslint src"
+
+  # Mocha
+  - "node_modules/.bin/mocha test"

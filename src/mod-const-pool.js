@@ -1,42 +1,28 @@
-/*
+/**
  * Universal Binary Format
- * Object Pool Extension
+ * @module ubf
  */
 import * as MARKER from "./markers";
 import {
   LEN_OF_MARKER,
   LEN_OF_SIZE1,
   LEN_OF_SIZE2,
-  LEN_OF_SIZE4
-} from "./base-parser";
+} from "./mod-base";
 
 /**
- * Object Pool Extension : extendContext
- */
-export function extendContext() {
-  Object.defineProperty(this, "pool", {
-    value: {
-      values: new Map(),
-      keys: new Map(),
-    },
-    enumerable: true,
-  });
-}
-
-/**
- * Object Pool Extension : parseValue
+ * Value
  */
 export function parseValue(): any {
   switch (this.readMarker()) {
-    // Get Pool Value --------------------------
-    case MARKER.POOL_VAL_GET1: {
+    // Value : Get
+    case MARKER.VAL_POOL_GET1: {
       let id = this.consumeUInt8(LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       return this.context::getPoolValue(id);
     }
-    case MARKER.POOL_VAL_GET2: {
+    case MARKER.VAL_POOL_GET2: {
       let id = this.consumeUInt16(LEN_OF_MARKER);
       if (id === undefined) {
         return;
@@ -44,8 +30,8 @@ export function parseValue(): any {
       return this.context::getPoolValue(id);
     }
 
-    // Set Pool Value --------------------------
-    case MARKER.POOL_VAL_SET1: {
+    // Value : Set
+    case MARKER.VAL_POOL_SET1: {
       let id = this.consumeUInt8(LEN_OF_MARKER);
       if (id === undefined) {
         return;
@@ -57,7 +43,7 @@ export function parseValue(): any {
       }
       return this.context::setPoolValue(id, value);
     }
-    case MARKER.POOL_VAL_SET2: {
+    case MARKER.VAL_POOL_SET2: {
       let id = this.consumeUInt16(LEN_OF_MARKER);
       if (id === undefined) {
         return;
@@ -73,19 +59,19 @@ export function parseValue(): any {
 }
 
 /**
- * Object Pool Extension : parseKey
+ * Key
  */
 export function parseKey(): string {
   switch (this.readMarker()) {
-    // Get Pool Key ----------------------------
-    case MARKER.POOL_KEY_GET1: {
+    // Pool : Get
+    case MARKER.KEY_POOL_GET1: {
       let id = this.consumeUInt8(LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       return this.context::getPoolKey(id);
     }
-    case MARKER.POOL_KEY_GET2: {
+    case MARKER.KEY_POOL_GET2: {
       let id = this.consumeUInt16(LEN_OF_MARKER);
       if (id === undefined) {
         return;
@@ -93,8 +79,8 @@ export function parseKey(): string {
       return this.context::getPoolKey(id);
     }
 
-    // Set Pool Key ----------------------------
-    case MARKER.POOL_KEY_SET1: {
+    // Key : Set
+    case MARKER.KEY_POOL_SET1: {
       let id = this.consumeUInt8(LEN_OF_MARKER);
       if (id === undefined) {
         return;
@@ -106,7 +92,7 @@ export function parseKey(): string {
       }
       return this.context::setPoolKey(id, key);
     }
-    case MARKER.POOL_KEY_SET2: {
+    case MARKER.KEY_POOL_SET2: {
       let id = this.consumeUInt16(LEN_OF_MARKER);
       if (id === undefined) {
         return;
@@ -121,34 +107,20 @@ export function parseKey(): string {
   }
 }
 
-/**
- * Object Pool Extension : getPoolValue
- */
-export function getPoolValue(id: number): any {
-  return this.pool && this.pool.values.get(id);
+function getPoolValue(id: number): any {
+  return this.valPool.get(id);
 }
 
-/**
- * Object Pool Extension : setPoolValue
- */
-export function setPoolValue(id: number, value: any): any {
-  this.pool && this.pool.values.set(id, value);
+function setPoolValue(id: number, value: any): any {
+  this.valPool.set(id, value);
   return value;
 }
 
-/**
- * Object Pool Extension : getPoolKey
- */
-export function getPoolKey(id: number): string {
-  // return this.pool && this.pool.keys.get(id);
-  return this.pool && this.pool.values.get(id);
+function getPoolKey(id: number): string {
+  return this.keyPool.get(id);
 }
 
-/**
- * Object Pool Extension : setPoolKey
- */
-export function setPoolKey(id: number, key: string): string {
-  // this.pool && this.pool.keys.set(id, key);
-  this.pool && this.pool.values.set(id, key);
+function setPoolKey(id: number, key: string): string {
+  this.keyPool.set(id, key);
   return key;
 }

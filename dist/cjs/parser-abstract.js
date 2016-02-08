@@ -1,40 +1,26 @@
-/*
- * Universal Binary Format
- * AbstractParser
- */
 "use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Universal Binary Format
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @module ubf
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.AbstractParser = undefined;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _nodeInt = require("node-int64");
 
-var _get = function get(_x14, _x15, _x16) { var _again = true; _function: while (_again) { var object = _x14, property = _x15, receiver = _x16; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x14 = parent; _x15 = property; _x16 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _nodeInt2 = _interopRequireDefault(_nodeInt);
 
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var _yaee = require("yaee");
-
-var _nodeInt64 = require("node-int64");
-
-var _nodeInt642 = _interopRequireDefault(_nodeInt64);
-
-/**
- * AbstractParser
- */
-
-var AbstractParser = (function (_EventEmitter) {
-  _inherits(AbstractParser, _EventEmitter);
-
+var AbstractParser = exports.AbstractParser = function () {
   function AbstractParser() {
     _classCallCheck(this, AbstractParser);
-
-    _get(Object.getPrototypeOf(AbstractParser.prototype), "constructor", this).apply(this, arguments);
   }
 
   _createClass(AbstractParser, [{
@@ -97,7 +83,7 @@ var AbstractParser = (function (_EventEmitter) {
   }, {
     key: "readInt64",
     value: function readInt64(offset) {
-      return +new _nodeInt642["default"](this.buffer, offset | 0).toNumber(false);
+      return +new _nodeInt2.default(this.buffer, offset | 0).toNumber(false);
     }
   }, {
     key: "readFloat",
@@ -246,6 +232,4 @@ var AbstractParser = (function (_EventEmitter) {
   }]);
 
   return AbstractParser;
-})(_yaee.EventEmitter);
-
-exports.AbstractParser = AbstractParser;
+}();

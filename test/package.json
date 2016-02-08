@@ -1,12 +1,7 @@
 {
   "private": true,
-  "scripts": {
-    "test": "mocha . --opts mocha.opts"
-  },
   "dependencies": {
-    "mocha": "^2.3.0"
-  },
-  "optionalDevDependencies": {
-    "babel-core": "^5.8.0"
+    "chai": "^3.5.0",
+    "chai-as-promised": "^5.2.0"
   }
 }

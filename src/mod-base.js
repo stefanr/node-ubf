@@ -1,81 +1,80 @@
-/*
+/**
  * Universal Binary Format
- * Base Profile
+ * @module ubf
  */
 import * as MARKER from "./markers";
 
-/**
- * Base Profile : Byte Lengths
- */
 export const LEN_OF_MARKER = 1;
-export const LEN_OF_SIZE1  = 1;
-export const LEN_OF_SIZE2  = 1 << 1;
-export const LEN_OF_SIZE4  = 1 << 2;
+
+export const LEN_OF_SIZE1 = 1;
+export const LEN_OF_SIZE2 = 2;
+export const LEN_OF_SIZE4 = 4;
 
 /**
- * Base Profile : parseControlDirective
+ * ControlDirective
  */
 export function parseControlDirective(): boolean {
   switch (this.readMarker()) {
     case MARKER.CTRL_HEADER: {
       this.consume(LEN_OF_MARKER);
+      // TODO
       return true;
     }
   }
 }
 
 /**
- * Base Profile : parseValue
+ * Value
  */
 export function parseValue(): any {
   switch (this.readMarker()) {
-    // Container : Dict ------------------------
+    // Dict
     case MARKER.VAL_DICT1: {
       let length = this::parseLength(LEN_OF_SIZE1, LEN_OF_MARKER);
       if (length === undefined) {
         return;
       }
-      return this::parseValueContainerDict(length);
+      return this::parseValueDict(length);
     }
     case MARKER.VAL_DICT2: {
       let length = this::parseLength(LEN_OF_SIZE2, LEN_OF_MARKER);
       if (length === undefined) {
         return;
       }
-      return this::parseValueContainerDict(length);
+      return this::parseValueDict(length);
     }
     case MARKER.VAL_DICT4: {
       let length = this::parseLength(LEN_OF_SIZE4, LEN_OF_MARKER);
       if (length === undefined) {
         return;
       }
-      return this::parseValueContainerDict(length);
+      return this::parseValueDict(length);
     }
 
-    // Container : List ------------------------
+    // List
     case MARKER.VAL_LIST1: {
       let length = this::parseLength(LEN_OF_SIZE1, LEN_OF_MARKER);
       if (length === undefined) {
         return;
       }
-      return this::parseValueContainerList(length);
+      return this::parseValueList(length);
     }
     case MARKER.VAL_LIST2: {
       let length = this::parseLength(LEN_OF_SIZE2, LEN_OF_MARKER);
       if (length === undefined) {
         return;
       }
-      return this::parseValueContainerList(length);
+      return this::parseValueList(length);
     }
     case MARKER.VAL_LIST4: {
       let length = this::parseLength(LEN_OF_SIZE4, LEN_OF_MARKER);
       if (length === undefined) {
         return;
       }
-      return this::parseValueContainerList(length);
+      return this::parseValueList(length);
     }
 
-    // Data : String ---------------------------
+    // String
     case MARKER.VAL_STR1: {
       let length = this::parseLength(LEN_OF_SIZE1, LEN_OF_MARKER);
       if (length === undefined) {
@@ -98,7 +97,7 @@ export function parseValue(): any {
       return this.consumeString(length);
     }
 
-    // Data : Binary ---------------------------
+    // Binary
     case MARKER.VAL_BIN1: {
       let length = this::parseLength(LEN_OF_SIZE1, LEN_OF_MARKER);
       if (length === undefined) {
@@ -121,7 +120,7 @@ export function parseValue(): any {
       return this.consumeBinary(length);
     }
 
-    // Primitive : Number ----------------------
+    // Number
     case MARKER.VAL_INT8: {
       return this.consumeInt8(LEN_OF_MARKER);
     }
@@ -142,27 +141,26 @@ export function parseValue(): any {
       return this.consumeDouble(LEN_OF_MARKER);
     }
 
-    // Primitive : Null ------------------------
-    case MARKER.VAL_NULL: {
-      return this.consume(LEN_OF_MARKER, null);
-    }
-
-    // Primitive : Boolean ---------------------
+    // Boolean
     case MARKER.VAL_FALSE: {
       return this.consume(LEN_OF_MARKER, false);
     }
     case MARKER.VAL_TRUE: {
       return this.consume(LEN_OF_MARKER, true);
     }
+
+    // Null
+    case MARKER.VAL_NULL: {
+      return this.consume(LEN_OF_MARKER, null);
+    }
   }
 }
 
 /**
- * Base Profile : parseKey
+ * Key
  */
 export function parseKey(): string {
   switch (this.readMarker()) {
-    // Key -------------------------------------
     case MARKER.KEY_STR1: {
       let length = this::parseLength(LEN_OF_SIZE1, LEN_OF_MARKER);
       if (length === undefined) {
@@ -181,7 +179,7 @@ export function parseKey(): string {
 }
 
 /**
- * Base Profile : parseLength
+ * Length
  */
 export function parseLength(size: number, relOffset: number = 0): number {
   switch (size) {
@@ -222,9 +220,9 @@ export function parseLength(size: number, relOffset: number = 0): number {
 }
 
 /**
- * Base Profile : parseValueContainerDict
+ * Value : Dict
  */
-export function parseValueContainerDict(length: number): object {
+export function parseValueDict(length: number): Object {
   let eoc = this.offset + length;
   let dict = Object.create(null);
   while (this.offset < eoc && this.offset < this.buffer.length) {
@@ -243,9 +241,9 @@ export function parseValueContainerDict(length: number): object {
 }
 
 /**
- * Base Profile : parseValueContainerList
+ * Value : List
  */
-export function parseValueContainerList(length: number): Array {
+export function parseValueList(length: number): Array {
   let eoc = this.offset + length;
   let list = [];
   while (this.offset < eoc && this.offset < this.buffer.length) {

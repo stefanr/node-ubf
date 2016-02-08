@@ -1,26 +1,18 @@
-/*
+/**
  * Universal Binary Format
- * Binarifier
+ * @module ubf
  */
-import {EventEmitter} from "yaee";
 import Int64 from "node-int64";
 import * as MARKER from "./markers";
+import {LEN_OF_MARKER} from "./mod-base";
+import {Context} from "./mod-context";
 
-/**
- * Byte Length
- */
-export const LEN_OF_MARKER = 1;
-
-/**
- * Binarifier
- */
-export class Binarifier extends EventEmitter {
+export class Binarifier {
 
   context: Context;
 
-  constructor(context: Context) {
-    super();
-    this.context = context;
+  constructor(context?: Context) {
+    this.context = context || new Context();
   }
 
   binarify(obj: any): Buffer {
@@ -32,35 +24,35 @@ export class Binarifier extends EventEmitter {
 
   writeValue(buf: Buffer, offset: number, obj: any, len: number): number {
     switch (typeof obj) {
-      // Dict, List, Null ------------------------
+      // Dict, List, Null
       case "object": {
-        // Null ------------------------
+        // Null
         if (obj === null) {
           return this.writeValueNull(buf, offset);
         }
-        // List ------------------------
+        // List
         if (Array.isArray(obj)) {
           return this.writeValueList(buf, offset, obj, len);
         }
-        // Dict ------------------------
+        // Dict
         return this.writeValueDict(buf, offset, obj, len);
       }
-      // String ----------------------------------
+      // String
       case "string": {
         return this.writeValueString(buf, offset, obj, len);
       }
-      // Number ----------------------------------
+      // Number
       case "number": {
         return this.writeValueNumber(buf, offset, obj, len);
       }
-      // Boolean ---------------------------------
+      // Boolean
       case "boolean": {
         return this.writeValueBoolean(buf, offset, obj);
       }
     }
   }
 
-  writeValueDict(buf: Buffer, offset: number, dict: object, len: number): number {
+  writeValueDict(buf: Buffer, offset: number, dict: Object, len: number): number {
     if (len === undefined) {
       let info = this.byteLengthInfo(dict);
       len = info.len - info.pre;
@@ -162,7 +154,7 @@ export class Binarifier extends EventEmitter {
   }
 
   writeValueBoolean(buf: Buffer, offset: number, bool: boolean): number {
-    return buf.writeUInt8(bool ? MARKER.VAL_TRUE : VAL_FALSE, offset);
+    return buf.writeUInt8(bool ? MARKER.VAL_TRUE : MARKER.VAL_FALSE, offset);
   }
 
   writeString(buf: Buffer, offset: number, str: string, len: number): number {
@@ -181,7 +173,7 @@ export class Binarifier extends EventEmitter {
 
   // Byte length -----------------------------------------------------
 
-  byteLengthInfo(obj: any): object {
+  byteLengthInfo(obj: any): Object {
     let stack = [];
     let root = { len: 0, pre: 0 };
     this.pushToLengthCountStack(stack, obj, root);
@@ -205,28 +197,28 @@ export class Binarifier extends EventEmitter {
         cur.parent.len += l;
       }
       switch (typeof cur.obj) {
-        // Dict, List, Null ----------------------
+        // Dict, List, Null
         case "object": {
-          // Null ----------------------
+          // Null
           if (cur.obj === null) {
             break;
           }
-          // Dict, List ----------------------
+          // Dict, List
           cur.pre += cur.len < 0xFF ? 1 : (cur.len < 0xFFFF ? 2 : 4);
           break;
         }
-        // String --------------------------------
+        // String
         case "string": {
           cur.len = this.byteLengthValueString(cur.obj);
           cur.pre += cur.len < 0xFF ? 1 : (cur.len < 0xFFFF ? 2 : 4);
           break;
         }
-        // Number --------------------------------
+        // Number
         case "number": {
           cur.len = this.byteLengthValueNumber(cur.obj);
           break;
         }
-        // Boolean -------------------------------
+        // Boolean
         case "boolean": {
           break;
         }
@@ -267,7 +259,7 @@ export class Binarifier extends EventEmitter {
     return 8;
   }
 
-  pushToLengthCountStack(stack: Array, val: any, parent: object, key: string): void {
+  pushToLengthCountStack(stack: Array, val: any, parent: Object, key: string): void {
     if (val !== undefined) {
       let obj = { obj: val, len: 0, parent: parent };
       if (key) {
@@ -284,7 +276,7 @@ export class Binarifier extends EventEmitter {
     }
   }
 
-  numberIsInteger(num: number): boolen {
+  numberIsInteger(num: number): boolean {
     return (num === (num|0) || num === Math.floor(num));
   }
 }

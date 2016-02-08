@@ -1,66 +1,58 @@
-/*
- * Universal Binary Format
- * Parser
- */
 "use strict";
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.ParseError = exports.Context = exports.Parser = undefined;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _parserAbstract = require("./parser-abstract");
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
+var _modContext = require("./mod-context");
 
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
+var _modBase = require("./mod-base");
+
+var base = _interopRequireWildcard(_modBase);
+
+var _modConstPool = require("./mod-const-pool");
+
+var constPool = _interopRequireWildcard(_modConstPool);
+
+var _modChunks = require("./mod-chunks");
+
+var chunks = _interopRequireWildcard(_modChunks);
+
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
+function _possibleConstructorReturn(self, call) { if (!self) { throw new ReferenceError("this hasn't been initialised - super() hasn't been called"); } return call && (typeof call === "object" || typeof call === "function") ? call : self; }
 
-var _yaee = require("yaee");
+function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; } /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * Universal Binary Format
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                * @module ubf
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                */
 
-var _abstractParser = require("./abstract-parser");
-
-var _baseParser = require("./base-parser");
-
-var base = _interopRequireWildcard(_baseParser);
-
-var _extObjectPool = require("./ext-object-pool");
-
-var objectPool = _interopRequireWildcard(_extObjectPool);
-
-/**
- * Error Codes
- */
-var ERR_UNKNOWN_MARKER = 0x01;
-exports.ERR_UNKNOWN_MARKER = ERR_UNKNOWN_MARKER;
-var ERR_VALUE_EXPECTED = 0x02;
-
-exports.ERR_VALUE_EXPECTED = ERR_VALUE_EXPECTED;
-/**
- * Parser
- */
-
-var Parser = (function (_AbstractParser) {
+var Parser = exports.Parser = function (_AbstractParser) {
   _inherits(Parser, _AbstractParser);
 
   function Parser(context) {
     _classCallCheck(this, Parser);
 
-    _get(Object.getPrototypeOf(Parser.prototype), "constructor", this).call(this);
-    this.context = context;
-  }
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Parser).call(this));
 
-  /**
-   * ParseError
-   */
+    _this.context = context || new _modContext.Context();
+    _this.chunkStack = [];
+    return _this;
+  }
 
   _createClass(Parser, [{
     key: "parse",
     value: function parse(buffer) {
       if (this.buffer && this.offset < this.buffer.length) {
-        this.resetBuffer(Buffer.concat([this.buffer.slice(this.offset | 0), buffer]));
+        var buffer_ = Buffer.concat([this.buffer.slice(this.offset | 0), buffer]);
+        this.resetBuffer(buffer_);
       } else {
         this.resetBuffer(buffer);
       }
@@ -69,66 +61,88 @@ var Parser = (function (_AbstractParser) {
       this.truncated = false;
 
       while (this.offset < this.buffer.length && this.parsing) {
-        // ControlDirective ------------------------
+        // ControlDirective
         if (this.parseControlDirective()) {
           continue;
         }
 
-        // Value -----------------------------------
+        // Value
         var value = this.parseValue();
-        if (value !== undefined) {
-          this.emit("value", { value: value });
+        if (value === chunks.CHUNK_BEGIN) {
+          continue;
+        } else if (value !== undefined) {
+          var lvl = this.chunkStack.length;
+          if (lvl) {
+            var chk = this.chunkStack[lvl - 1];
+            if (chk.k) {
+              chk.v[chk.k] = value;
+            } else {
+              chk.v.push(value);
+            }
+          } else {
+            this.context.emit("value", { value: value });
+          }
           continue;
         } else if (this.truncated) {
-          this.emit("truncated", {
-            buffer: this.buffer,
-            offset: this.offset
-          });
+          this.context._handleTruncated();
           break;
         }
 
-        // Key Value -------------------------------
+        // Entry
         var key = this.parseKey();
         if (key !== undefined) {
-          var _value = this.parseValue();
-          if (_value !== undefined) {
-            this.context.global[key] = _value;
-            this.emit("global", { key: key, value: _value });
+          var lvl = this.chunkStack.length;
+          var chk = lvl && this.chunkStack[lvl - 1];
+          value = this.parseValue();
+          if (value === chunks.CHUNK_BEGIN) {
+            chk.k = key;
+            continue;
+          } else if (value !== undefined) {
+            if (chk) {
+              chk.v[key] = value;
+            } else {
+              this.context.global[key] = value;
+              this.context.emit("global", { key: key, value: value });
+            }
             continue;
           } else if (this.truncated) {
-            this.emit("truncated", {
-              buffer: this.buffer,
-              offset: this.offset
-            });
+            this.context._handleTruncated();
             break;
           }
 
-          // Value expected ------------------------
-          this.emit("error", new ParseError("Value expected", {
-            code: ERR_VALUE_EXPECTED,
-            buffer: this.buffer,
-            offset: this.offset
-          }));
-          this.resetBuffer();
-          break;
-        } else if (this.truncated) {
-          this.emit("truncated", {
+          // Error: Value expected
+          var _err = new ParseError("Value expected", {
+            code: ParseError.Code.ERR_VALUE_EXPECTED,
             buffer: this.buffer,
             offset: this.offset
           });
+          this.context.emit("error", _err);
+          this.resetBuffer();
+          break;
+        } else if (this.truncated) {
+          this.context._handleTruncated();
           break;
         }
 
-        // Unknown marker --------------------------
-        this.emit("error", new ParseError("Unknown marker", {
-          code: ERR_UNKNOWN_MARKER,
+        // Error: Unknown marker
+        var err = new ParseError("Unknown marker", {
+          code: ParseError.Code.UNKNOWN_MARKER,
           buffer: this.buffer,
           offset: this.offset,
           marker: this.readMarker()
-        }));
+        });
+        this.context.emit("error", err);
         this.resetBuffer();
         break;
       }
+    }
+  }, {
+    key: "_handleTruncated",
+    value: function _handleTruncated() {
+      this.context.emit("truncated", {
+        buffer: this.buffer,
+        offset: this.offset
+      });
     }
   }, {
     key: "stop",
@@ -143,48 +157,57 @@ var Parser = (function (_AbstractParser) {
   }, {
     key: "parseValue",
     value: function parseValue() {
-      // Base Profile : Value ----------------------
+      // Base / Value
       var value = base.parseValue.call(this);
-      // Object Pool Extension : Value -------------
+      // Constant Pool / Value
       if (value === undefined) {
-        value = objectPool.parseValue.call(this);
+        value = constPool.parseValue.call(this);
+      }
+      // Chunks / Value
+      if (value === undefined) {
+        value = chunks.parseValue.call(this);
       }
       return value;
     }
   }, {
     key: "parseKey",
     value: function parseKey() {
-      // Base Profile : Key ------------------------
+      // Base / Key
       var key = base.parseKey.call(this);
-      // Object Pool Extension : Key ---------------
+      // Constant Pool / Key
       if (key === undefined) {
-        key = objectPool.parseKey.call(this);
+        key = constPool.parseKey.call(this);
       }
       return key;
     }
   }]);
 
   return Parser;
-})(_abstractParser.AbstractParser);
+}(_parserAbstract.AbstractParser);
 
-exports.Parser = Parser;
+exports.Context = _modContext.Context;
 
-var ParseError = (function (_Error) {
+var ParseError = exports.ParseError = function (_Error) {
   _inherits(ParseError, _Error);
 
   function ParseError(message, detail) {
     _classCallCheck(this, ParseError);
 
-    _get(Object.getPrototypeOf(ParseError.prototype), "constructor", this).call(this, message);
-    this.name = "ParseError";
-    this.message = message || "Unknown error";
-    this.detail = detail || {};
+    var _this2 = _possibleConstructorReturn(this, Object.getPrototypeOf(ParseError).call(this, message));
+
+    _this2.name = "ParseError";
+    _this2.message = message || "Unknown error";
+    _this2.detail = detail || {};
     if (Error.captureStackTrace) {
-      Error.captureStackTrace(this, ParseError);
+      Error.captureStackTrace(_this2, ParseError);
     }
+    return _this2;
   }
 
   return ParseError;
-})(Error);
+}(Error);
 
-exports.ParseError = ParseError;
+ParseError.Code = {
+  UNKNOWN_MARKER: 0x01,
+  VALUE_EXPECTED: 0x02
+};

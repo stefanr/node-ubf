@@ -1,53 +1,40 @@
-/*
- * Universal Binary Format
- * Binarifier
- */
 "use strict";
+
+var _typeof = typeof Symbol === "function" && typeof Symbol.iterator === "symbol" ? function (obj) { return typeof obj; } : function (obj) { return obj && typeof Symbol === "function" && obj.constructor === Symbol ? "symbol" : typeof obj; };
+
+var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }(); /**
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * Universal Binary Format
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      * @module ubf
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      */
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.Binarifier = undefined;
 
-var _createClass = (function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; })();
+var _nodeInt = require("node-int64");
 
-var _get = function get(_x, _x2, _x3) { var _again = true; _function: while (_again) { var object = _x, property = _x2, receiver = _x3; desc = parent = getter = undefined; _again = false; if (object === null) object = Function.prototype; var desc = Object.getOwnPropertyDescriptor(object, property); if (desc === undefined) { var parent = Object.getPrototypeOf(object); if (parent === null) { return undefined; } else { _x = parent; _x2 = property; _x3 = receiver; _again = true; continue _function; } } else if ("value" in desc) { return desc.value; } else { var getter = desc.get; if (getter === undefined) { return undefined; } return getter.call(receiver); } } };
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj["default"] = obj; return newObj; } }
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { "default": obj }; }
-
-function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
-
-function _inherits(subClass, superClass) { if (typeof superClass !== "function" && superClass !== null) { throw new TypeError("Super expression must either be null or a function, not " + typeof superClass); } subClass.prototype = Object.create(superClass && superClass.prototype, { constructor: { value: subClass, enumerable: false, writable: true, configurable: true } }); if (superClass) Object.setPrototypeOf ? Object.setPrototypeOf(subClass, superClass) : subClass.__proto__ = superClass; }
-
-var _yaee = require("yaee");
-
-var _nodeInt64 = require("node-int64");
-
-var _nodeInt642 = _interopRequireDefault(_nodeInt64);
+var _nodeInt2 = _interopRequireDefault(_nodeInt);
 
 var _markers = require("./markers");
 
 var MARKER = _interopRequireWildcard(_markers);
 
-/**
- * Byte Length
- */
-var LEN_OF_MARKER = 1;
+var _modBase = require("./mod-base");
 
-exports.LEN_OF_MARKER = LEN_OF_MARKER;
-/**
- * Binarifier
- */
+var _modContext = require("./mod-context");
 
-var Binarifier = (function (_EventEmitter) {
-  _inherits(Binarifier, _EventEmitter);
+function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
+
+var Binarifier = exports.Binarifier = function () {
   function Binarifier(context) {
     _classCallCheck(this, Binarifier);
 
-    _get(Object.getPrototypeOf(Binarifier.prototype), "constructor", this).call(this);
-    this.context = context;
+    this.context = context || new _modContext.Context();
   }
 
   _createClass(Binarifier, [{
@@ -61,32 +48,32 @@ var Binarifier = (function (_EventEmitter) {
   }, {
     key: "writeValue",
     value: function writeValue(buf, offset, obj, len) {
-      switch (typeof obj) {
-        // Dict, List, Null ------------------------
+      switch (typeof obj === "undefined" ? "undefined" : _typeof(obj)) {
+        // Dict, List, Null
         case "object":
           {
-            // Null ------------------------
+            // Null
             if (obj === null) {
               return this.writeValueNull(buf, offset);
             }
-            // List ------------------------
+            // List
             if (Array.isArray(obj)) {
               return this.writeValueList(buf, offset, obj, len);
             }
-            // Dict ------------------------
+            // Dict
             return this.writeValueDict(buf, offset, obj, len);
           }
-        // String ----------------------------------
+        // String
         case "string":
           {
             return this.writeValueString(buf, offset, obj, len);
           }
-        // Number ----------------------------------
+        // Number
         case "number":
           {
             return this.writeValueNumber(buf, offset, obj, len);
           }
-        // Boolean ---------------------------------
+        // Boolean
         case "boolean":
           {
             return this.writeValueBoolean(buf, offset, obj);
@@ -187,7 +174,7 @@ var Binarifier = (function (_EventEmitter) {
           offset = buf.writeInt32BE(num, offset);
         } else {
           offset = buf.writeUInt8(MARKER.VAL_INT64, offset);
-          offset = new _nodeInt642["default"](num).toBuffer().copy(buf, offset);
+          offset = new _nodeInt2.default(num).toBuffer().copy(buf, offset);
         }
       } else {
         offset = buf.writeUInt8(MARKER.VAL_DOUBLE, offset);
@@ -203,7 +190,7 @@ var Binarifier = (function (_EventEmitter) {
   }, {
     key: "writeValueBoolean",
     value: function writeValueBoolean(buf, offset, bool) {
-      return buf.writeUInt8(bool ? MARKER.VAL_TRUE : VAL_FALSE, offset);
+      return buf.writeUInt8(bool ? MARKER.VAL_TRUE : MARKER.VAL_FALSE, offset);
     }
   }, {
     key: "writeString",
@@ -231,7 +218,7 @@ var Binarifier = (function (_EventEmitter) {
       this.pushToLengthCountStack(stack, obj, root);
       while (stack.length) {
         var cur = stack[stack.length - 1];
-        cur.pre = LEN_OF_MARKER;
+        cur.pre = _modBase.LEN_OF_MARKER;
         if (cur.props && cur.props.length) {
           var key = cur.props.shift();
           var val = cur.obj[key];
@@ -244,36 +231,36 @@ var Binarifier = (function (_EventEmitter) {
         }
         if (cur.key) {
           var l = this.byteLengthValueString(cur.key);
-          cur.parent.len += LEN_OF_MARKER;
+          cur.parent.len += _modBase.LEN_OF_MARKER;
           cur.parent.len += l < 0xFF ? 1 : 2;
           cur.parent.len += l;
         }
-        switch (typeof cur.obj) {
-          // Dict, List, Null ----------------------
+        switch (_typeof(cur.obj)) {
+          // Dict, List, Null
           case "object":
             {
-              // Null ----------------------
+              // Null
               if (cur.obj === null) {
                 break;
               }
-              // Dict, List ----------------------
+              // Dict, List
               cur.pre += cur.len < 0xFF ? 1 : cur.len < 0xFFFF ? 2 : 4;
               break;
             }
-          // String --------------------------------
+          // String
           case "string":
             {
               cur.len = this.byteLengthValueString(cur.obj);
               cur.pre += cur.len < 0xFF ? 1 : cur.len < 0xFFFF ? 2 : 4;
               break;
             }
-          // Number --------------------------------
+          // Number
           case "number":
             {
               cur.len = this.byteLengthValueNumber(cur.obj);
               break;
             }
-          // Boolean -------------------------------
+          // Boolean
           case "boolean":
             {
               break;
@@ -325,7 +312,7 @@ var Binarifier = (function (_EventEmitter) {
         if (key) {
           obj.key = key;
         }
-        if (typeof val === "object" && val !== null) {
+        if ((typeof val === "undefined" ? "undefined" : _typeof(val)) === "object" && val !== null) {
           if (Array.isArray(val)) {
             obj.idx = 0;
           } else {
@@ -343,6 +330,4 @@ var Binarifier = (function (_EventEmitter) {
   }]);
 
   return Binarifier;
-})(_yaee.EventEmitter);
-
-exports.Binarifier = Binarifier;
+}();
