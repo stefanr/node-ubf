@@ -2,10 +2,21 @@
  * Universal Binary Format
  * @module ubf
  */
+import {EventEmitter} from "events";
 import * as MARKER from "./markers";
-import {LEN_OF_MARKER} from "./mod-base";
+import * as base from "./mod-base";
 
-export const CHUNK_BEGIN = Symbol("{chunk}");
+export class Chunk extends EventEmitter {
+
+  type: string;
+  value: Object|Array;
+
+  constructor(type: string, value: Object|Array) {
+    super();
+    this.type = type;
+    this.value = value;
+  }
+}
 
 /**
  * Value
@@ -14,42 +25,49 @@ export function parseValue(): any {
   switch (this.readMarker()) {
     // Dict
     case MARKER.VAL_DICTX: {
-      this.chunkStack.push({ t: "D", v: {} });
-      return this.consume(LEN_OF_MARKER, CHUNK_BEGIN);
+      return this::beginChunk("D", {});
     }
     // List
     case MARKER.VAL_LISTX: {
-      this.chunkStack.push({ t: "L", v: [] });
-      return this.consume(LEN_OF_MARKER, CHUNK_BEGIN);
+      return this::beginChunk("L", []);
     }
     // String
     case MARKER.VAL_STRX: {
-      this.chunkStack.push({ t: "S", v: [] });
-      return this.consume(LEN_OF_MARKER, CHUNK_BEGIN);
+      return this::beginChunk("S", []);
     }
     // Binary
     case MARKER.VAL_BINX: {
-      this.chunkStack.push({ t: "B", v: [] });
-      return this.consume(LEN_OF_MARKER, CHUNK_BEGIN);
+      return this::beginChunk("B", []);
     }
-    // Chunk End
+    // :End
     case MARKER.CHUNK_END: {
       if (!this.chunkStack.length) {
         return;
       }
-      let chk = this.chunkStack.pop();
-      let val = chk.v;
-      switch (chk.t) {
-        case "S": {
-          val = val.join("");
-          break;
-        }
-        case "B": {
-          val = Buffer.concat(val);
-          break;
-        }
-      }
-      return this.consume(LEN_OF_MARKER, val);
+      return this::endChunk();
     }
   }
+}
+
+function beginChunk(type: string, value: Object|Array): Chunk {
+  let chunk = new Chunk(type, value);
+  this.chunkStack.push(chunk);
+  return this.consume(base.LEN_OF_MARKER, chunk);
+}
+
+function endChunk(): any {
+  let chunk = this.chunkStack.pop();
+  let {type, value} = chunk;
+  switch (type) {
+    case "S": {
+      value = value.join("");
+      break;
+    }
+    case "B": {
+      value = Buffer.concat(value);
+      break;
+    }
+  }
+  chunk.emit("end", {value});
+  return this.consume(base.LEN_OF_MARKER, value);
 }

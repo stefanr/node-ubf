@@ -1,5 +1,7 @@
 "use strict";
 
+var _extends = Object.assign || function (target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i]; for (var key in source) { if (Object.prototype.hasOwnProperty.call(source, key)) { target[key] = source[key]; } } } return target; };
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 Object.defineProperty(exports, "__esModule", {
@@ -15,13 +17,13 @@ var _modBase = require("./mod-base");
 
 var base = _interopRequireWildcard(_modBase);
 
-var _modConstPool = require("./mod-const-pool");
-
-var constPool = _interopRequireWildcard(_modConstPool);
-
 var _modChunks = require("./mod-chunks");
 
 var chunks = _interopRequireWildcard(_modChunks);
+
+var _modConstPool = require("./mod-const-pool");
+
+var constPool = _interopRequireWildcard(_modConstPool);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -51,8 +53,8 @@ var Parser = exports.Parser = function (_AbstractParser) {
     key: "parse",
     value: function parse(buffer) {
       if (this.buffer && this.offset < this.buffer.length) {
-        var buffer_ = Buffer.concat([this.buffer.slice(this.offset | 0), buffer]);
-        this.resetBuffer(buffer_);
+        var rest = this.buffer.slice(this.offset | 0);
+        this.resetBuffer(Buffer.concat([rest, buffer]));
       } else {
         this.resetBuffer(buffer);
       }
@@ -68,86 +70,102 @@ var Parser = exports.Parser = function (_AbstractParser) {
 
         // Value
         var value = this.parseValue();
-        if (value === chunks.CHUNK_BEGIN) {
+        if (value instanceof chunks.Chunk) {
           continue;
         } else if (value !== undefined) {
-          var lvl = this.chunkStack.length;
-          if (lvl) {
-            var chk = this.chunkStack[lvl - 1];
-            if (chk.k) {
-              chk.v[chk.k] = value;
+          var chunkDepth = this.chunkStack.length;
+          if (chunkDepth) {
+            var chunk = this.chunkStack[chunkDepth - 1];
+            if (chunk.type === "D") {
+              chunk.value[chunk.key] = value;
             } else {
-              chk.v.push(value);
+              chunk.value.push(value);
             }
           } else {
-            this.context.emit("value", { value: value });
+            this._handleValue(value);
           }
           continue;
         } else if (this.truncated) {
-          this.context._handleTruncated();
+          this._handleTruncated();
           break;
         }
+
+        var syncOffset = this.offset;
 
         // Entry
         var key = this.parseKey();
         if (key !== undefined) {
-          var lvl = this.chunkStack.length;
-          var chk = lvl && this.chunkStack[lvl - 1];
+          var chunkDepth = this.chunkStack.length;
+          var chunk = this.chunkStack[chunkDepth - 1];
           value = this.parseValue();
-          if (value === chunks.CHUNK_BEGIN) {
-            chk.k = key;
+          if (value instanceof chunks.Chunk) {
+            chunk.key = key;
             continue;
           } else if (value !== undefined) {
-            if (chk) {
-              chk.v[key] = value;
+            if (chunk) {
+              chunk.value[key] = value;
             } else {
-              this.context.global[key] = value;
-              this.context.emit("global", { key: key, value: value });
+              this._handleEntry(key, value);
             }
             continue;
           } else if (this.truncated) {
-            this.context._handleTruncated();
+            this.offset = syncOffset;
+            this._handleTruncated();
             break;
           }
 
           // Error: Value expected
-          var _err = new ParseError("Value expected", {
-            code: ParseError.Code.ERR_VALUE_EXPECTED,
-            buffer: this.buffer,
-            offset: this.offset
+          this._handleError("Value expected", {
+            code: ParseError.Code.VALUE_EXPECTED
           });
-          this.context.emit("error", _err);
           this.resetBuffer();
           break;
         } else if (this.truncated) {
-          this.context._handleTruncated();
+          this._handleTruncated();
           break;
         }
 
         // Error: Unknown marker
-        var err = new ParseError("Unknown marker", {
+        this._handleError("Unknown marker", {
           code: ParseError.Code.UNKNOWN_MARKER,
-          buffer: this.buffer,
-          offset: this.offset,
           marker: this.readMarker()
         });
-        this.context.emit("error", err);
         this.resetBuffer();
         break;
       }
     }
   }, {
-    key: "_handleTruncated",
-    value: function _handleTruncated() {
-      this.context.emit("truncated", {
-        buffer: this.buffer,
-        offset: this.offset
-      });
-    }
-  }, {
     key: "stop",
     value: function stop() {
       this.parsing = false;
+    }
+  }, {
+    key: "_handleValue",
+    value: function _handleValue(value) {
+      this.context.emit("value", { value: value });
+    }
+  }, {
+    key: "_handleEntry",
+    value: function _handleEntry(key, value) {
+      this.context.global[key] = value;
+      this.context.emit("global", { key: key, value: value });
+    }
+  }, {
+    key: "_handleTruncated",
+    value: function _handleTruncated() {
+      var buffer = this.buffer;
+      var offset = this.offset;
+
+      this.context.emit("truncated", { buffer: buffer, offset: offset });
+    }
+  }, {
+    key: "_handleError",
+    value: function _handleError(msg, data) {
+      var buffer = this.buffer;
+      var offset = this.offset;
+
+      var detail = _extends({ code: -1, buffer: buffer, offset: offset }, data);
+      this.context.emit("error", new ParseError(msg, detail));
     }
   }, {
     key: "parseControlDirective",
@@ -157,6 +175,9 @@ var Parser = exports.Parser = function (_AbstractParser) {
   }, {
     key: "parseValue",
     value: function parseValue() {
+      if (!this.available(base.LEN_OF_MARKER)) {
+        return;
+      }
       // Base / Value
       var value = base.parseValue.call(this);
       // Constant Pool / Value

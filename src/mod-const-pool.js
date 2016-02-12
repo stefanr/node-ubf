@@ -3,11 +3,10 @@
  * @module ubf
  */
 import * as MARKER from "./markers";
-import {
-  LEN_OF_MARKER,
-  LEN_OF_SIZE1,
-  LEN_OF_SIZE2,
-} from "./mod-base";
+import * as base from "./mod-base";
+import * as chunks from "./mod-chunks";
+
+export const POOL_UNDEFINED = Symbol("{undefined}");
 
 /**
  * Value
@@ -16,14 +15,14 @@ export function parseValue(): any {
   switch (this.readMarker()) {
     // Value : Get
     case MARKER.VAL_POOL_GET1: {
-      let id = this.consumeUInt8(LEN_OF_MARKER);
+      let id = this.consumeUInt8(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       return this.context::getPoolValue(id);
     }
     case MARKER.VAL_POOL_GET2: {
-      let id = this.consumeUInt16(LEN_OF_MARKER);
+      let id = this.consumeUInt16(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
@@ -32,30 +31,42 @@ export function parseValue(): any {
 
     // Value : Set
     case MARKER.VAL_POOL_SET1: {
-      let id = this.consumeUInt8(LEN_OF_MARKER);
+      let id = this.consumeUInt8(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       let value = this.parseValue();
       if (value === undefined) {
-        this.rewind(LEN_OF_MARKER + LEN_OF_SIZE1);
+        this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE1);
         return;
+      } else if (value instanceof chunks.Chunk) {
+        return this::handleChunk(id, value);
       }
       return this.context::setPoolValue(id, value);
     }
     case MARKER.VAL_POOL_SET2: {
-      let id = this.consumeUInt16(LEN_OF_MARKER);
+      let id = this.consumeUInt16(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       let value = this.parseValue();
       if (value === undefined) {
-        this.rewind(LEN_OF_MARKER + LEN_OF_SIZE2);
+        this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE2);
         return;
+      } else if (value instanceof chunks.Chunk) {
+        return this::handleChunk(id, value);
       }
       return this.context::setPoolValue(id, value);
     }
   }
+}
+
+function handleChunk(id: number, chunk: chunks.Chunk) {
+  this.context::setPoolValue(id, POOL_UNDEFINED);
+  chunk.on("end", ({value}) => {
+    this.context::setPoolValue(id, value);
+  });
+  return chunk;
 }
 
 /**
@@ -65,14 +76,14 @@ export function parseKey(): string {
   switch (this.readMarker()) {
     // Pool : Get
     case MARKER.KEY_POOL_GET1: {
-      let id = this.consumeUInt8(LEN_OF_MARKER);
+      let id = this.consumeUInt8(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       return this.context::getPoolKey(id);
     }
     case MARKER.KEY_POOL_GET2: {
-      let id = this.consumeUInt16(LEN_OF_MARKER);
+      let id = this.consumeUInt16(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
@@ -81,25 +92,25 @@ export function parseKey(): string {
 
     // Key : Set
     case MARKER.KEY_POOL_SET1: {
-      let id = this.consumeUInt8(LEN_OF_MARKER);
+      let id = this.consumeUInt8(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       let key = this.parseKey();
       if (key === undefined) {
-        this.rewind(LEN_OF_MARKER + LEN_OF_SIZE1);
+        this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE1);
         return;
       }
       return this.context::setPoolKey(id, key);
     }
     case MARKER.KEY_POOL_SET2: {
-      let id = this.consumeUInt16(LEN_OF_MARKER);
+      let id = this.consumeUInt16(base.LEN_OF_MARKER);
       if (id === undefined) {
         return;
       }
       let key = this.parseKey();
       if (key === undefined) {
-        this.rewind(LEN_OF_MARKER + LEN_OF_SIZE2);
+        this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE2);
         return;
       }
       return this.context::setPoolKey(id, key);
