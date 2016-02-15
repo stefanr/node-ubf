@@ -81,21 +81,18 @@ export const KEY_STR2         = 0xE1;
  */
 
 /**
- * Chunks / Control Markers
- */
-export const CHUNK_END        = 0x00;
-
-/**
  * Chunks / Value : Dict & List
  */
 export const VAL_DICTX        = 0x1C;
 export const VAL_LISTX        = 0x1D;
+export const VAL_XENDC        = 0x1F;
 
 /**
  * Chunks / Value : String & Binary
  */
 export const VAL_STRX         = 0x2C;
 export const VAL_BINX         = 0x2D;
+export const VAL_XEND         = 0x2F;
 
 /**
  * Constant Pool Module

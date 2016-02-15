@@ -69,8 +69,9 @@ function parseValue() {
       {
         return beginChunk.call(this, "B", []);
       }
-    // :End
-    case MARKER.CHUNK_END:
+    // Chunks End
+    case MARKER.VAL_XENDC:
+    case MARKER.VAL_XEND:
       {
         if (!this.chunkStack.length) {
           return;

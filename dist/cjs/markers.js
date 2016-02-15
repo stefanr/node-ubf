@@ -86,21 +86,18 @@ var KEY_STR2 = exports.KEY_STR2 = 0xE1;
  */
 
 /**
- * Chunks / Control Markers
- */
-var CHUNK_END = exports.CHUNK_END = 0x00;
-
-/**
  * Chunks / Value : Dict & List
  */
 var VAL_DICTX = exports.VAL_DICTX = 0x1C;
 var VAL_LISTX = exports.VAL_LISTX = 0x1D;
+var VAL_XENDC = exports.VAL_XENDC = 0x1F;
 
 /**
  * Chunks / Value : String & Binary
  */
 var VAL_STRX = exports.VAL_STRX = 0x2C;
 var VAL_BINX = exports.VAL_BINX = 0x2D;
+var VAL_XEND = exports.VAL_XEND = 0x2F;
 
 /**
  * Constant Pool Module

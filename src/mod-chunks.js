@@ -39,8 +39,9 @@ export function parseValue(): any {
     case MARKER.VAL_BINX: {
       return this::beginChunk("B", []);
     }
-    // :End
-    case MARKER.CHUNK_END: {
+    // Chunks End
+    case MARKER.VAL_XENDC:
+    case MARKER.VAL_XEND: {
       if (!this.chunkStack.length) {
         return;
       }
