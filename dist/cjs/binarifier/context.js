@@ -3,7 +3,7 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Context = undefined;
+exports.BinarifierContext = undefined;
 
 var _events = require("events");
 
@@ -16,20 +16,18 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * @module ubf
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
-var Context = exports.Context = function (_EventEmitter) {
-  _inherits(Context, _EventEmitter);
+var BinarifierContext = exports.BinarifierContext = function (_EventEmitter) {
+  _inherits(BinarifierContext, _EventEmitter);
 
-  function Context(global) {
-    _classCallCheck(this, Context);
+  function BinarifierContext() {
+    _classCallCheck(this, BinarifierContext);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Context).call(this));
-
-    _this.global = global || {};
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(BinarifierContext).call(this));
 
     _this.valPool = new Map();
     _this.keyPool = new Map();
     return _this;
   }
 
-  return Context;
+  return BinarifierContext;
 }(_events.EventEmitter);

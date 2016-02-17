@@ -3,20 +3,9 @@
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.Chunk = undefined;
-exports.parseValue = parseValue;
+exports.ParserContext = undefined;
 
 var _events = require("events");
-
-var _markers = require("./markers");
-
-var MARKER = _interopRequireWildcard(_markers);
-
-var _modBase = require("./mod-base");
-
-var base = _interopRequireWildcard(_modBase);
-
-function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -27,83 +16,20 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * @module ubf
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
-var Chunk = exports.Chunk = function (_EventEmitter) {
-  _inherits(Chunk, _EventEmitter);
+var ParserContext = exports.ParserContext = function (_EventEmitter) {
+  _inherits(ParserContext, _EventEmitter);
 
-  function Chunk(type, value) {
-    _classCallCheck(this, Chunk);
+  function ParserContext(global) {
+    _classCallCheck(this, ParserContext);
 
-    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Chunk).call(this));
+    var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(ParserContext).call(this));
 
-    _this.type = type;
-    _this.value = value;
+    _this.global = global || {};
+
+    _this.valPool = new Map();
+    _this.keyPool = new Map();
     return _this;
   }
 
-  return Chunk;
+  return ParserContext;
 }(_events.EventEmitter);
-
-/**
- * Value
- */
-
-function parseValue() {
-  switch (this.readMarker()) {
-    // Dict
-    case MARKER.VAL_DICTX:
-      {
-        return beginChunk.call(this, "D", {});
-      }
-    // List
-    case MARKER.VAL_LISTX:
-      {
-        return beginChunk.call(this, "L", []);
-      }
-    // String
-    case MARKER.VAL_STRX:
-      {
-        return beginChunk.call(this, "S", []);
-      }
-    // Binary
-    case MARKER.VAL_BINX:
-      {
-        return beginChunk.call(this, "B", []);
-      }
-    // Chunks End
-    case MARKER.VAL_XENDC:
-    case MARKER.VAL_XEND:
-      {
-        if (!this.chunkStack.length) {
-          return;
-        }
-        return endChunk.call(this);
-      }
-  }
-}
-
-function beginChunk(type, value) {
-  var chunk = new Chunk(type, value);
-  this.chunkStack.push(chunk);
-  return this.consume(base.LEN_OF_MARKER, chunk);
-}
-
-function endChunk() {
-  var chunk = this.chunkStack.pop();
-  var type = chunk.type;
-  var value = chunk.value;
-
-  switch (type) {
-    case "S":
-      {
-        value = value.join("");
-        break;
-      }
-    case "B":
-      {
-        value = Buffer.concat(value);
-        break;
-      }
-  }
-  chunk.emit("end", { value: value });
-  return this.consume(base.LEN_OF_MARKER, value);
-}

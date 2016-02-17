@@ -16,22 +16,27 @@ var _binarifier = require("./binarifier");
  * @module ubf
  */
 function parse(buf) {
+  var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
   return new Promise(function (resolve, reject) {
-    var p = new _parser.Parser();
-    p.context.on("value", function (e) {
-      return resolve(e.value);
+    var p = new _parser.Parser(null, options);
+    p.context.on("value", function (_ref) {
+      var value = _ref.value;
+      return resolve(value);
     });
-    p.context.on("error", function (e) {
-      return reject(e);
+    p.context.on("error", function (err) {
+      return reject(err);
     });
     p.parse(buf);
   });
 }
 
 function binarify(obj) {
+  var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
   return new Promise(function (resolve, reject) {
     try {
-      var b = new _binarifier.Binarifier();
+      var b = new _binarifier.Binarifier(null, options);
       resolve(b.binarify(obj));
     } catch (err) {
       reject(err);
@@ -40,11 +45,17 @@ function binarify(obj) {
 }
 
 function ubfsize(obj) {
+  var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
   return new Promise(function (resolve, reject) {
     try {
-      var b = new _binarifier.Binarifier();
-      var i = b.byteLengthInfo(obj);
-      resolve(i.len);
+      var b = new _binarifier.Binarifier(null, options);
+
+      var _b$byteLengthInfo = b.byteLengthInfo(obj);
+
+      var len = _b$byteLengthInfo.len;
+
+      resolve(len);
     } catch (err) {
       reject(err);
     }

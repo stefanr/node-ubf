@@ -3,56 +3,62 @@
  * @module ubf
  */
 import Int64 from "node-int64";
+import {LEN} from "./info";
 import * as MARKER from "./markers";
-import {LEN_OF_MARKER} from "./mod-base";
-import {Context} from "./mod-context";
+import * as __ctxt from "./binarifier/context";
+
+export const {BinarifierContext} = __ctxt;
 
 export class Binarifier {
 
-  context: Context;
+  context: BinarifierContext;
+  options = {};
 
-  constructor(context?: Context) {
-    this.context = context || new Context();
+  constructor(context?: BinarifierContext, options? = {}) {
+    this.context = context || new BinarifierContext();
+    Object.assign(this.options, options);
   }
 
   binarify(obj: any): Buffer {
     let info = this.byteLengthInfo(obj);
     let buf = new Buffer(info.len);
-    this.writeValue(buf, 0, obj, info.len - info.pre);
+    this._writeValue(buf, 0, obj, info.len - info.pre);
     return buf;
   }
 
-  writeValue(buf: Buffer, offset: number, obj: any, len: number): number {
+  // Write Operations ------------------------------------------------
+
+  _writeValue(buf: Buffer, offset: number, obj: any, len?: number): number {
     switch (typeof obj) {
       // Dict, List, Null
       case "object": {
         // Null
         if (obj === null) {
-          return this.writeValueNull(buf, offset);
+          return this._writeValueNull(buf, offset);
         }
         // List
         if (Array.isArray(obj)) {
-          return this.writeValueList(buf, offset, obj, len);
+          return this._writeValueList(buf, offset, obj, len);
         }
         // Dict
-        return this.writeValueDict(buf, offset, obj, len);
+        return this._writeValueDict(buf, offset, obj, len);
       }
       // String
       case "string": {
-        return this.writeValueString(buf, offset, obj, len);
+        return this._writeValueString(buf, offset, obj, len);
       }
       // Number
       case "number": {
-        return this.writeValueNumber(buf, offset, obj, len);
+        return this._writeValueNumber(buf, offset, obj, len);
       }
       // Boolean
       case "boolean": {
-        return this.writeValueBoolean(buf, offset, obj);
+        return this._writeValueBoolean(buf, offset, obj);
       }
     }
   }
 
-  writeValueDict(buf: Buffer, offset: number, dict: Object, len: number): number {
+  _writeValueDict(buf: Buffer, offset: number, dict: Object, len?: number): number {
     if (len === undefined) {
       let info = this.byteLengthInfo(dict);
       len = info.len - info.pre;
@@ -71,25 +77,25 @@ export class Binarifier {
     for (let i = 0; i < props.length; i++) {
       let key = props[i];
       let val = dict[key];
-      offset = this.writeKey(buf, offset, key);
-      offset = this.writeValue(buf, offset, val);
+      offset = this._writeKey(buf, offset, key);
+      offset = this._writeValue(buf, offset, val);
     }
     return offset;
   }
 
-  writeKey(buf: Buffer, offset: number, key: string, len: number): number {
+  _writeKey(buf: Buffer, offset: number, key: string, len?: number): number {
     if (len === undefined) {
-      len = this.byteLengthValueString(key);
+      len = this._byteLengthValueString(key);
     }
     if (len < 0xFF) {
       offset = buf.writeUInt8(MARKER.KEY_STR1, offset);
     } else {
       offset = buf.writeUInt8(MARKER.KEY_STR2, offset);
     }
-    return this.writeString(buf, offset, key, Math.min(len, 0xFFFE));
+    return this._writeString(buf, offset, key, Math.min(len, 0xFFFE));
   }
 
-  writeValueList(buf: Buffer, offset: number, list: Array, len: number): number {
+  _writeValueList(buf: Buffer, offset: number, list: Array, len?: number): number {
     if (len === undefined) {
       let info = this.byteLengthInfo(list);
       len = info.len - info.pre;
@@ -105,14 +111,14 @@ export class Binarifier {
       offset = buf.writeUInt32BE(len, offset);
     }
     for (let i = 0; i < list.length; i++) {
-      offset = this.writeValue(buf, offset, list[i]);
+      offset = this._writeValue(buf, offset, list[i]);
     }
     return offset;
   }
 
-  writeValueString(buf: Buffer, offset: number, str: string, len: number): number {
+  _writeValueString(buf: Buffer, offset: number, str: string, len?: number): number {
     if (len === undefined) {
-      len = this.byteLengthValueString(str);
+      len = this._byteLengthValueString(str);
     }
     if (len < 0xFF) {
       offset = buf.writeUInt8(MARKER.VAL_STR1, offset);
@@ -121,13 +127,13 @@ export class Binarifier {
     } else {
       offset = buf.writeUInt8(MARKER.VAL_STR4, offset);
     }
-    return this.writeString(buf, offset, str, len);
+    return this._writeString(buf, offset, str, len);
   }
 
-  writeValueNumber(buf: Buffer, offset: number, num: number, len: number): number {
-    if (this.numberIsInteger(num)) {
+  _writeValueNumber(buf: Buffer, offset: number, num: number, len?: number): number {
+    if (Number.isInteger(num)) {
       if (len === undefined) {
-        len = this.byteLengthValueInteger(num);
+        len = this._byteLengthValueInteger(num);
       }
       if (len === 1) {
         offset = buf.writeUInt8(MARKER.VAL_INT8, offset);
@@ -149,17 +155,17 @@ export class Binarifier {
     return offset;
   }
 
-  writeValueNull(buf: Buffer, offset: number): number {
+  _writeValueNull(buf: Buffer, offset: number): number {
     return buf.writeUInt8(MARKER.VAL_NULL, offset);
   }
 
-  writeValueBoolean(buf: Buffer, offset: number, bool: boolean): number {
+  _writeValueBoolean(buf: Buffer, offset: number, bool: boolean): number {
     return buf.writeUInt8(bool ? MARKER.VAL_TRUE : MARKER.VAL_FALSE, offset);
   }
 
-  writeString(buf: Buffer, offset: number, str: string, len: number): number {
+  _writeString(buf: Buffer, offset: number, str: string, len?: number): number {
     if (len === undefined) {
-      len = this.byteLengthValueString(str);
+      len = this._byteLengthValueString(str);
     }
     if (len < 0xFF) {
       offset = buf.writeUInt8(len, offset);
@@ -171,28 +177,28 @@ export class Binarifier {
     return offset + buf.write(str, offset, len, "utf8");
   }
 
-  // Byte length -----------------------------------------------------
+  // Byte Length -----------------------------------------------------
 
   byteLengthInfo(obj: any): Object {
     let stack = [];
     let root = { len: 0, pre: 0 };
-    this.pushToLengthCountStack(stack, obj, root);
+    this._pushToLengthCountStack(stack, obj, root);
     while (stack.length) {
       let cur = stack[stack.length - 1];
-      cur.pre = LEN_OF_MARKER;
+      cur.pre = LEN.MARKER;
       if (cur.props && cur.props.length) {
         let key = cur.props.shift();
         let val = cur.obj[key];
-        this.pushToLengthCountStack(stack, val, cur, key);
+        this._pushToLengthCountStack(stack, val, cur, key);
         continue;
       } else if (cur.idx > -1 && cur.idx < cur.obj.length) {
         let val = cur.obj[cur.idx++];
-        this.pushToLengthCountStack(stack, val !== undefined ? val : null, cur);
+        this._pushToLengthCountStack(stack, val !== undefined ? val : null, cur);
         continue;
       }
       if (cur.key) {
-        let l = this.byteLengthValueString(cur.key);
-        cur.parent.len += LEN_OF_MARKER;
+        let l = this._byteLengthValueString(cur.key);
+        cur.parent.len += LEN.MARKER;
         cur.parent.len += l < 0xFF ? 1 : 2;
         cur.parent.len += l;
       }
@@ -209,13 +215,13 @@ export class Binarifier {
         }
         // String
         case "string": {
-          cur.len = this.byteLengthValueString(cur.obj);
+          cur.len = this._byteLengthValueString(cur.obj);
           cur.pre += cur.len < 0xFF ? 1 : (cur.len < 0xFFFF ? 2 : 4);
           break;
         }
         // Number
         case "number": {
-          cur.len = this.byteLengthValueNumber(cur.obj);
+          cur.len = this._byteLengthValueNumber(cur.obj);
           break;
         }
         // Boolean
@@ -230,38 +236,32 @@ export class Binarifier {
     return root;
   }
 
-  byteLengthValueString(str: string): number {
+  _byteLengthValueString(s: string): number {
     let len = 0;
-    for (let i = 0; i < str.length; i++) {
-      let c = str.charCodeAt(i);
+    for (let i = 0; i < s.length; i++) {
+      let c = s.charCodeAt(i);
       len += c < 0x80 ? 1 : (c < 0x0800 ? 2 : (c < 0xD800 || c > 0xDFFF ? 3 : 2));
     }
     return len;
   }
 
-  byteLengthValueNumber(num: number): number {
-    if (this.numberIsInteger(num)) {
-      return this.byteLengthValueInteger(num);
+  _byteLengthValueNumber(n: number): number {
+    if (Number.isInteger(n)) {
+      return this._byteLengthValueInteger(n);
     }
     return 8;
   }
 
-  byteLengthValueInteger(num: number): number {
-    if (-0x80 <= num && num <= 0x7F) {
-      return 1;
+  _byteLengthValueInteger(n: number): number {
+    if (n < 0) {
+      return -0x80 <= n ? 1 : (-0x8000 <= n ? 2 : (-0x80000000 <= n ? 4 : 8));
     }
-    if (-0x8000 <= num && num <= 0x7FFF) {
-      return 2;
-    }
-    if (-0x80000000 <= num && num <= 0x7FFFFFFF) {
-      return 4;
-    }
-    return 8;
+    return n <= 0x7F ? 1 : (n <= 0x7FFF ? 2 : (n <= 0x7FFFFFFF ? 4 : 8));
   }
 
-  pushToLengthCountStack(stack: Array, val: any, parent: Object, key: string): void {
+  _pushToLengthCountStack(stack: Array, val: any, parent: Object, key: string): void {
     if (val !== undefined) {
-      let obj = { obj: val, len: 0, parent: parent };
+      let obj = { obj: val, len: 0, parent };
       if (key) {
         obj.key = key;
       }
@@ -274,9 +274,5 @@ export class Binarifier {
       }
       stack.push(obj);
     }
-  }
-
-  numberIsInteger(num: number): boolean {
-    return (num === (num|0) || num === Math.floor(num));
   }
 }

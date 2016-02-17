@@ -7,23 +7,25 @@ var _createClass = function () { function defineProperties(target, props) { for 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.ParseError = exports.Context = exports.Parser = undefined;
+exports.Parser = exports.ParserContext = undefined;
 
 var _parserAbstract = require("./parser-abstract");
 
-var _modContext = require("./mod-context");
+var _base = require("./parser/base");
 
-var _modBase = require("./mod-base");
+var __base = _interopRequireWildcard(_base);
 
-var base = _interopRequireWildcard(_modBase);
+var _context = require("./parser/context");
 
-var _modChunks = require("./mod-chunks");
+var __ctxt = _interopRequireWildcard(_context);
 
-var chunks = _interopRequireWildcard(_modChunks);
+var _chunks = require("./parser/chunks");
 
-var _modConstPool = require("./mod-const-pool");
+var __chnk = _interopRequireWildcard(_chunks);
 
-var constPool = _interopRequireWildcard(_modConstPool);
+var _constPool = require("./parser/const-pool");
+
+var __pool = _interopRequireWildcard(_constPool);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
@@ -36,16 +38,24 @@ function _inherits(subClass, superClass) { if (typeof superClass !== "function" 
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 * @module ubf
                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 */
 
+var ParserContext = __ctxt.ParserContext;
+exports.ParserContext = ParserContext;
+
 var Parser = exports.Parser = function (_AbstractParser) {
   _inherits(Parser, _AbstractParser);
 
   function Parser(context) {
+    var options = arguments.length <= 1 || arguments[1] === undefined ? {} : arguments[1];
+
     _classCallCheck(this, Parser);
 
     var _this = _possibleConstructorReturn(this, Object.getPrototypeOf(Parser).call(this));
 
-    _this.context = context || new _modContext.Context();
-    _this.chunkStack = [];
+    _this.options = {};
+
+    _this.context = context || new ParserContext();
+    _extends(_this.options, options);
+    _this._chunkStack = [];
     return _this;
   }
 
@@ -54,29 +64,27 @@ var Parser = exports.Parser = function (_AbstractParser) {
     value: function parse(buffer) {
       if (this.buffer && this.offset < this.buffer.length) {
         var rest = this.buffer.slice(this.offset | 0);
-        this.resetBuffer(Buffer.concat([rest, buffer]));
+        this._resetBuffer(Buffer.concat([rest, buffer]));
       } else {
-        this.resetBuffer(buffer);
+        this._resetBuffer(buffer);
       }
-
       this.parsing = true;
-      this.truncated = false;
 
-      while (this.offset < this.buffer.length && this.parsing) {
+      while (this.parsing && this.buffer && this.offset < this.buffer.length) {
         // ControlDirective
-        if (this.parseControlDirective()) {
+        if (this._parseControlDirective()) {
           continue;
         }
 
         // Value
-        var value = this.parseValue();
-        if (value instanceof chunks.Chunk) {
+        var value = this._parseValue();
+        if (value instanceof __chnk.Chunk) {
           continue;
         } else if (value !== undefined) {
-          var chunkDepth = this.chunkStack.length;
+          var chunkDepth = this._chunkStack.length;
           if (chunkDepth) {
-            var chunk = this.chunkStack[chunkDepth - 1];
-            if (chunk.type === "D") {
+            var chunk = this._chunkStack[chunkDepth - 1];
+            if (chunk.key) {
               chunk.value[chunk.key] = value;
             } else {
               chunk.value.push(value);
@@ -85,7 +93,7 @@ var Parser = exports.Parser = function (_AbstractParser) {
             this._handleValue(value);
           }
           continue;
-        } else if (this.truncated) {
+        } else if (this._truncated) {
           this._handleTruncated();
           break;
         }
@@ -93,12 +101,12 @@ var Parser = exports.Parser = function (_AbstractParser) {
         var syncOffset = this.offset;
 
         // Entry
-        var key = this.parseKey();
+        var key = this._parseKey();
         if (key !== undefined) {
-          var chunkDepth = this.chunkStack.length;
-          var chunk = this.chunkStack[chunkDepth - 1];
-          value = this.parseValue();
-          if (value instanceof chunks.Chunk) {
+          var chunkDepth = this._chunkStack.length;
+          var chunk = this._chunkStack[chunkDepth - 1];
+          value = this._parseValue();
+          if (value instanceof __chnk.Chunk) {
             chunk.key = key;
             continue;
           } else if (value !== undefined) {
@@ -108,7 +116,7 @@ var Parser = exports.Parser = function (_AbstractParser) {
               this._handleEntry(key, value);
             }
             continue;
-          } else if (this.truncated) {
+          } else if (this._truncated) {
             this.offset = syncOffset;
             this._handleTruncated();
             break;
@@ -118,9 +126,8 @@ var Parser = exports.Parser = function (_AbstractParser) {
           this._handleError("Value expected", {
             code: ParseError.Code.VALUE_EXPECTED
           });
-          this.resetBuffer();
           break;
-        } else if (this.truncated) {
+        } else if (this._truncated) {
           this._handleTruncated();
           break;
         }
@@ -130,14 +137,14 @@ var Parser = exports.Parser = function (_AbstractParser) {
           code: ParseError.Code.UNKNOWN_MARKER,
           marker: this.readMarker()
         });
-        this.resetBuffer();
         break;
       }
     }
   }, {
-    key: "stop",
-    value: function stop() {
-      this.parsing = false;
+    key: "reset",
+    value: function reset() {
+      this._chunkStack.length = 0;
+      this._resetBuffer();
     }
   }, {
     key: "_handleValue",
@@ -147,8 +154,9 @@ var Parser = exports.Parser = function (_AbstractParser) {
   }, {
     key: "_handleEntry",
     value: function _handleEntry(key, value) {
+      var oldValue = this.context.global[key];
       this.context.global[key] = value;
-      this.context.emit("global", { key: key, value: value });
+      this.context.emit("global", { key: key, value: value, oldValue: oldValue });
     }
   }, {
     key: "_handleTruncated",
@@ -166,38 +174,37 @@ var Parser = exports.Parser = function (_AbstractParser) {
 
       var detail = _extends({ code: -1, buffer: buffer, offset: offset }, data);
       this.context.emit("error", new ParseError(msg, detail));
+      this.reset();
     }
   }, {
-    key: "parseControlDirective",
-    value: function parseControlDirective() {
-      return base.parseControlDirective.call(this);
+    key: "_parseControlDirective",
+    value: function _parseControlDirective() {
+      // Base : Control Directive
+      return __base.parseControlDirective.call(this);
     }
   }, {
-    key: "parseValue",
-    value: function parseValue() {
-      if (!this.available(base.LEN_OF_MARKER)) {
-        return;
-      }
-      // Base / Value
-      var value = base.parseValue.call(this);
-      // Constant Pool / Value
+    key: "_parseValue",
+    value: function _parseValue() {
+      // Base : Value
+      var value = __base.parseValue.call(this);
+      // Chunks : Value
       if (value === undefined) {
-        value = constPool.parseValue.call(this);
+        value = __chnk.parseValue.call(this);
       }
-      // Chunks / Value
+      // Constant Pool : Value
       if (value === undefined) {
-        value = chunks.parseValue.call(this);
+        value = __pool.parseValue.call(this);
       }
       return value;
     }
   }, {
-    key: "parseKey",
-    value: function parseKey() {
-      // Base / Key
-      var key = base.parseKey.call(this);
-      // Constant Pool / Key
+    key: "_parseKey",
+    value: function _parseKey() {
+      // Base : Key
+      var key = __base.parseKey.call(this);
+      // Constant Pool : Key
       if (key === undefined) {
-        key = constPool.parseKey.call(this);
+        key = __pool.parseKey.call(this);
       }
       return key;
     }
@@ -206,9 +213,7 @@ var Parser = exports.Parser = function (_AbstractParser) {
   return Parser;
 }(_parserAbstract.AbstractParser);
 
-exports.Context = _modContext.Context;
-
-var ParseError = exports.ParseError = function (_Error) {
+var ParseError = function (_Error) {
   _inherits(ParseError, _Error);
 
   function ParseError(message, detail) {

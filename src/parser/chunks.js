@@ -3,8 +3,8 @@
  * @module ubf
  */
 import {EventEmitter} from "events";
-import * as MARKER from "./markers";
-import * as base from "./mod-base";
+import {LEN} from "../info";
+import * as MARKER from "../markers";
 
 export class Chunk extends EventEmitter {
 
@@ -18,11 +18,8 @@ export class Chunk extends EventEmitter {
   }
 }
 
-/**
- * Value
- */
-export function parseValue(): any {
-  switch (this.readMarker()) {
+export function parseValue(): ?any {
+  switch (this._readMarker()) {
     // Dict
     case MARKER.VAL_DICTX: {
       return this::beginChunk("D", {});
@@ -42,22 +39,22 @@ export function parseValue(): any {
     // Chunks End
     case MARKER.VAL_XENDC:
     case MARKER.VAL_XEND: {
-      if (!this.chunkStack.length) {
-        return;
+      if (this._chunkStack.length) {
+        return this::endChunk();
       }
-      return this::endChunk();
+      return;
     }
   }
 }
 
 function beginChunk(type: string, value: Object|Array): Chunk {
   let chunk = new Chunk(type, value);
-  this.chunkStack.push(chunk);
-  return this.consume(base.LEN_OF_MARKER, chunk);
+  this._chunkStack.push(chunk);
+  return this._consume(LEN.MARKER, chunk);
 }
 
 function endChunk(): any {
-  let chunk = this.chunkStack.pop();
+  let chunk = this._chunkStack.pop();
   let {type, value} = chunk;
   switch (type) {
     case "S": {
@@ -70,5 +67,5 @@ function endChunk(): any {
     }
   }
   chunk.emit("end", {value});
-  return this.consume(base.LEN_OF_MARKER, value);
+  return this._consume(LEN.MARKER, value);
 }

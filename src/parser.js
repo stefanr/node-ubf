@@ -3,48 +3,53 @@
  * @module ubf
  */
 import {AbstractParser} from "./parser-abstract";
-import {Context} from "./mod-context";
-import * as base from "./mod-base";
-import * as chunks from "./mod-chunks";
-import * as constPool from "./mod-const-pool";
+import * as __base from "./parser/base";
+import * as __ctxt from "./parser/context";
+import * as __chnk from "./parser/chunks";
+import * as __pool from "./parser/const-pool";
+
+export const {ParserContext} = __ctxt;
 
 export class Parser extends AbstractParser {
 
-  context: Context;
-  chunkStack: Array<Object>;
+  context: ParserContext;
+  options = {};
 
-  constructor(context?: Context) {
+  parsing: boolean;
+
+  _chunkStack: Array<Object>;
+
+  constructor(context?: ParserContext, options? = {}) {
     super();
-    this.context = context || new Context();
-    this.chunkStack = [];
+    this.context = context || new ParserContext();
+    Object.assign(this.options, options);
+    this._chunkStack = [];
   }
 
   parse(buffer: Buffer): void {
     if (this.buffer && this.offset < this.buffer.length) {
       let rest = this.buffer.slice(this.offset|0);
-      this.resetBuffer(Buffer.concat([rest, buffer]));
+      this._resetBuffer(Buffer.concat([rest, buffer]));
     } else {
-      this.resetBuffer(buffer);
+      this._resetBuffer(buffer);
     }
-
     this.parsing = true;
-    this.truncated = false;
 
-    while (this.offset < this.buffer.length && this.parsing) {
+    while (this.parsing && this.buffer && this.offset < this.buffer.length) {
       // ControlDirective
-      if (this.parseControlDirective()) {
+      if (this._parseControlDirective()) {
         continue;
       }
 
       // Value
-      let value = this.parseValue();
-      if (value instanceof chunks.Chunk) {
+      let value = this._parseValue();
+      if (value instanceof __chnk.Chunk) {
         continue;
       } else if (value !== undefined) {
-        let chunkDepth = this.chunkStack.length;
+        let chunkDepth = this._chunkStack.length;
         if (chunkDepth) {
-          let chunk = this.chunkStack[chunkDepth - 1];
-          if (chunk.type === "D") {
+          let chunk = this._chunkStack[chunkDepth - 1];
+          if (chunk.key) {
             chunk.value[chunk.key] = value;
           } else {
             chunk.value.push(value);
@@ -53,7 +58,7 @@ export class Parser extends AbstractParser {
           this._handleValue(value);
         }
         continue;
-      } else if (this.truncated) {
+      } else if (this._truncated) {
         this._handleTruncated();
         break;
       }
@@ -61,12 +66,12 @@ export class Parser extends AbstractParser {
       let syncOffset = this.offset;
 
       // Entry
-      let key = this.parseKey();
+      let key = this._parseKey();
       if (key !== undefined) {
-        let chunkDepth = this.chunkStack.length;
-        let chunk = this.chunkStack[chunkDepth - 1];
-        value = this.parseValue();
-        if (value instanceof chunks.Chunk) {
+        let chunkDepth = this._chunkStack.length;
+        let chunk = this._chunkStack[chunkDepth - 1];
+        value = this._parseValue();
+        if (value instanceof __chnk.Chunk) {
           chunk.key = key;
           continue;
         } else if (value !== undefined) {
@@ -76,7 +81,7 @@ export class Parser extends AbstractParser {
             this._handleEntry(key, value);
           }
           continue;
-        } else if (this.truncated) {
+        } else if (this._truncated) {
           this.offset = syncOffset;
           this._handleTruncated();
           break;
@@ -86,9 +91,8 @@ export class Parser extends AbstractParser {
         this._handleError("Value expected", {
           code: ParseError.Code.VALUE_EXPECTED,
         });
-        this.resetBuffer();
         break;
-      } else if (this.truncated) {
+      } else if (this._truncated) {
         this._handleTruncated();
         break;
       }
@@ -98,13 +102,13 @@ export class Parser extends AbstractParser {
         code: ParseError.Code.UNKNOWN_MARKER,
         marker: this.readMarker(),
       });
-      this.resetBuffer();
       break;
     }
   }
 
-  stop(): void {
-    this.parsing = false;
+  reset(): void {
+    this._chunkStack.length = 0;
+    this._resetBuffer();
   }
 
   _handleValue(value: any): void {
@@ -112,8 +116,9 @@ export class Parser extends AbstractParser {
   }
 
   _handleEntry(key: string, value: any): void {
+    let oldValue = this.context.global[key];
     this.context.global[key] = value;
-    this.context.emit("global", {key, value});
+    this.context.emit("global", {key, value, oldValue});
   }
 
   _handleTruncated(): void {
@@ -125,43 +130,40 @@ export class Parser extends AbstractParser {
     let {buffer, offset} = this;
     let detail = Object.assign({code: -1, buffer, offset}, data);
     this.context.emit("error", new ParseError(msg, detail));
+    this.reset();
   }
 
-  parseControlDirective(): boolean {
-    return this::base.parseControlDirective();
+  _parseControlDirective(): ?boolean {
+    // Base : Control Directive
+    return this::__base.parseControlDirective();
   }
 
-  parseValue(): any {
-    if (!this.available(base.LEN_OF_MARKER)) {
-      return;
-    }
-    // Base / Value
-    let value = this::base.parseValue();
-    // Constant Pool / Value
+  _parseValue(): ?any {
+    // Base : Value
+    let value = this::__base.parseValue();
+    // Chunks : Value
     if (value === undefined) {
-      value = this::constPool.parseValue();
+      value = this::__chnk.parseValue();
     }
-    // Chunks / Value
+    // Constant Pool : Value
     if (value === undefined) {
-      value = this::chunks.parseValue();
+      value = this::__pool.parseValue();
     }
     return value;
   }
 
-  parseKey(): string {
-    // Base / Key
-    let key = this::base.parseKey();
-    // Constant Pool / Key
+  _parseKey(): ?string {
+    // Base : Key
+    let key = this::__base.parseKey();
+    // Constant Pool : Key
     if (key === undefined) {
-      key = this::constPool.parseKey();
+      key = this::__pool.parseKey();
     }
     return key;
   }
 }
 
-export {Context};
-
-export class ParseError extends Error {
+class ParseError extends Error {
 
   detail: Object;
 

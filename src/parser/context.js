@@ -4,7 +4,7 @@
  */
 import {EventEmitter} from "events";
 
-export class Context extends EventEmitter {
+export class ParserContext extends EventEmitter {
 
   global: Object;
 

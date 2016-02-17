@@ -7,37 +7,31 @@ exports.POOL_UNDEFINED = undefined;
 exports.parseValue = parseValue;
 exports.parseKey = parseKey;
 
-var _markers = require("./markers");
+var _info = require("../info");
+
+var _markers = require("../markers");
 
 var MARKER = _interopRequireWildcard(_markers);
 
-var _modBase = require("./mod-base");
+var _chunks = require("./chunks");
 
-var base = _interopRequireWildcard(_modBase);
-
-var _modChunks = require("./mod-chunks");
-
-var chunks = _interopRequireWildcard(_modChunks);
+var __chnk = _interopRequireWildcard(_chunks);
 
 function _interopRequireWildcard(obj) { if (obj && obj.__esModule) { return obj; } else { var newObj = {}; if (obj != null) { for (var key in obj) { if (Object.prototype.hasOwnProperty.call(obj, key)) newObj[key] = obj[key]; } } newObj.default = obj; return newObj; } }
 
-var POOL_UNDEFINED = exports.POOL_UNDEFINED = Symbol("{undefined}");
+var POOL_UNDEFINED = exports.POOL_UNDEFINED = Symbol("{undefined}"); /**
+                                                                      * Universal Binary Format
+                                                                      * @module ubf
+                                                                      */
 
-/**
- * Value
- */
-/**
- * Universal Binary Format
- * @module ubf
- */
 function parseValue() {
-  switch (this.readMarker()) {
+  switch (this._readMarker()) {
     // Value : Get
     case MARKER.VAL_POOL_GET1:
       {
         var _context;
 
-        var id = this.consumeUInt8(base.LEN_OF_MARKER);
+        var id = this._consumeUInt8(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
@@ -47,7 +41,7 @@ function parseValue() {
       {
         var _context2;
 
-        var id = this.consumeUInt16(base.LEN_OF_MARKER);
+        var id = this._consumeUInt16(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
@@ -59,15 +53,15 @@ function parseValue() {
       {
         var _context3;
 
-        var id = this.consumeUInt8(base.LEN_OF_MARKER);
+        var id = this._consumeUInt8(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
-        var value = this.parseValue();
+        var value = this._parseValue();
         if (value === undefined) {
-          this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE1);
+          this._rewind(_info.LEN.MARKER + _info.LEN.SIZE1);
           return;
-        } else if (value instanceof chunks.Chunk) {
+        } else if (value instanceof __chnk.Chunk) {
           return handleChunk.call(this, id, value);
         }
         return (_context3 = this.context, setPoolValue).call(_context3, id, value);
@@ -76,15 +70,15 @@ function parseValue() {
       {
         var _context4;
 
-        var id = this.consumeUInt16(base.LEN_OF_MARKER);
+        var id = this._consumeUInt16(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
-        var value = this.parseValue();
+        var value = this._parseValue();
         if (value === undefined) {
-          this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE2);
+          this._rewind(_info.LEN.MARKER + _info.LEN.SIZE2);
           return;
-        } else if (value instanceof chunks.Chunk) {
+        } else if (value instanceof __chnk.Chunk) {
           return handleChunk.call(this, id, value);
         }
         return (_context4 = this.context, setPoolValue).call(_context4, id, value);
@@ -107,17 +101,14 @@ function handleChunk(id, chunk) {
   return chunk;
 }
 
-/**
- * Key
- */
 function parseKey() {
-  switch (this.readMarker()) {
+  switch (this._readMarker()) {
     // Pool : Get
     case MARKER.KEY_POOL_GET1:
       {
         var _context7;
 
-        var id = this.consumeUInt8(base.LEN_OF_MARKER);
+        var id = this._consumeUInt8(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
@@ -127,7 +118,7 @@ function parseKey() {
       {
         var _context8;
 
-        var id = this.consumeUInt16(base.LEN_OF_MARKER);
+        var id = this._consumeUInt16(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
@@ -139,13 +130,13 @@ function parseKey() {
       {
         var _context9;
 
-        var id = this.consumeUInt8(base.LEN_OF_MARKER);
+        var id = this._consumeUInt8(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
-        var key = this.parseKey();
+        var key = this._parseKey();
         if (key === undefined) {
-          this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE1);
+          this._rewind(_info.LEN.MARKER + _info.LEN.SIZE1);
           return;
         }
         return (_context9 = this.context, setPoolKey).call(_context9, id, key);
@@ -154,13 +145,13 @@ function parseKey() {
       {
         var _context10;
 
-        var id = this.consumeUInt16(base.LEN_OF_MARKER);
+        var id = this._consumeUInt16(_info.LEN.MARKER);
         if (id === undefined) {
           return;
         }
-        var key = this.parseKey();
+        var key = this._parseKey();
         if (key === undefined) {
-          this.rewind(base.LEN_OF_MARKER + base.LEN_OF_SIZE2);
+          this.rewind(_info.LEN.MARKER + _info.LEN.SIZE2);
           return;
         }
         return (_context10 = this.context, setPoolKey).call(_context10, id, key);
