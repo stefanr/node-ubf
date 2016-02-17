@@ -11,7 +11,7 @@ node_js:
 
 install:
   # Install Global Modules
-  - "npm install eslint babel-eslint ubfg/eslint-config-ubf"
+  - "npm install eslint@^1.0.0 babel-eslint ubfg/eslint-config-ubf"
   - "npm install mocha"
 
   # Install Local Modules
